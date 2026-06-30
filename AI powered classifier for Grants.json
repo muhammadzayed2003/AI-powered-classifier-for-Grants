@@ -1,0 +1,316 @@
+{
+  "name": "AI powered classifier for Grants",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "YOUR DETAILS",
+        "formDescription": "Enter your details correctly.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name:",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "City",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Salary",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Graduated",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "yes"
+                  },
+                  {
+                    "option": "no"
+                  },
+                  {
+                    "option": "in progress"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Number",
+              "fieldType": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        80,
+        -64
+      ],
+      "id": "ac22f391-938c-48b1-8b11-589eed5a43f6",
+      "name": "On form submission",
+      "webhookId": "d403c4c5-b860-4a7a-80e2-968be761399d"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following data and return the result according to the system instructions.\n\nName: {{ $json[\"Name:\"] }}\nEmail: {{ $json[\"Email\"] }}\nSalary: {{ $json[\"Salary\"] }}",
+        "options": {
+          "systemMessage": "You are a data classification assistant.\n\nYour task is to analyze the incoming JSON data and classify the person's financial status based on salary.\n\nRules:\n- If Salary is less than 50000, Status = Poor\n- If Salary is 50000 or greater, Status = Rich\n\nReturn ONLY valid JSON in the following format:\n\n{\n  \"Name\": \"\",\n  \"Gmail\": \"\",\n  \"Status\": \"\"\n}\n\nDo not include explanations, markdown, or extra text."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        304,
+        -64
+      ],
+      "id": "b562fe84-272b-4fda-a859-b60bd67bb485",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        160
+      ],
+      "id": "7ca7b282-94e1-4bf7-a520-c1d7d9d3cb9f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "E6Er3VQeW7AVS4UN",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1B7DjuBPmPqxtmnqHCffD7dUG5cTW3RTfdSlwnNavDzI",
+          "mode": "list",
+          "cachedResultName": "poor/rich",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B7DjuBPmPqxtmnqHCffD7dUG5cTW3RTfdSlwnNavDzI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B7DjuBPmPqxtmnqHCffD7dUG5cTW3RTfdSlwnNavDzI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ JSON.parse($json.output).Name }}",
+            "Gmail": "={{ JSON.parse($json.output).Gmail }}",
+            "status": "={{ JSON.parse($json.output).Status }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Gmail",
+              "displayName": "Gmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        -64
+      ],
+      "id": "5adfec8f-70c8-4fc4-b1fe-bea2cae57ec6",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Jm6bAripbKhbxLF5",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1B7DjuBPmPqxtmnqHCffD7dUG5cTW3RTfdSlwnNavDzI",
+          "mode": "list",
+          "cachedResultName": "poor/rich",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B7DjuBPmPqxtmnqHCffD7dUG5cTW3RTfdSlwnNavDzI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B7DjuBPmPqxtmnqHCffD7dUG5cTW3RTfdSlwnNavDzI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "Poor"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        -64
+      ],
+      "id": "2bd5c7ba-580c-46a6-86df-c8851aae9e35",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Jm6bAripbKhbxLF5",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Gmail }}",
+        "subject": "You are getting Aid",
+        "message": "Congrats you won 25000 Aid from punjab governmt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        -64
+      ],
+      "id": "1ad1a08b-7f5c-4e45-9de2-6a74c449639d",
+      "name": "Send a message",
+      "webhookId": "7c60a8ba-1dd8-491d-b431-d1dcb9f0d95f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "u4C5pjRqlEE78lo9",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "eacaba5e-9ac4-4b7d-9b6a-658965dab0f6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5156f459029c8ae112351ff21fccaaf1fe53cbdc895578514ee5349f15c67549"
+  },
+  "nodeGroups": [],
+  "id": "ldfxQGsyRDfFYAcq",
+  "tags": []
+}
